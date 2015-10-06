@@ -1,0 +1,3 @@
+[submodule "weatherbox"]
+	path = weatherbox
+	url = https://github.com/DustHoff/weatherbox
