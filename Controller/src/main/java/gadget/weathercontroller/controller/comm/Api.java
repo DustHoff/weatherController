@@ -1,5 +1,7 @@
 package gadget.weathercontroller.controller.comm;
 
+import org.apache.http.client.HttpClient;
+
 /**
  * Created by Dustin on 06.10.2015.
  */
@@ -8,7 +10,6 @@ public class Api {
     private static Api instance;
 
     private Api() {
-
     }
 
     public static Api call() {
@@ -18,6 +19,13 @@ public class Api {
 
     public void setSkylightRGB(short red, short green, short blue) {
 
+    }
+
+    /**
+     * @return new short[]{red,green,blue}
+     */
+    public short[] getSkylightRGB() {
+        return null;
     }
 
     public void setCloudIntensitiy(int percent) {
