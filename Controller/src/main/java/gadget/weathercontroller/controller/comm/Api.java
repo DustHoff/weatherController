@@ -1,6 +1,17 @@
 package gadget.weathercontroller.controller.comm;
 
+import com.google.gson.Gson;
+import gadget.component.api.data.AmbientRequest;
+import gadget.component.api.data.Response;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultHttpClient;
+
+import java.io.StringWriter;
 
 /**
  * Created by Dustin on 06.10.2015.
@@ -8,8 +19,12 @@ import org.apache.http.client.HttpClient;
 public class Api {
 
     private static Api instance;
+    private final DefaultHttpClient httpClient;
+    private final Gson gson;
 
     private Api() {
+        gson = new Gson();
+        httpClient = new DefaultHttpClient();
     }
 
     public static Api call() {
@@ -17,19 +32,76 @@ public class Api {
         return instance;
     }
 
-    public void setSkylightRGB(short red, short green, short blue) {
-
+    private Response callGetRequest(String url) throws ApiException {
+        try {
+            HttpGet post = new HttpGet(url);
+            HttpResponse response = httpClient.execute(post);
+            StringWriter writer = new StringWriter();
+            IOUtils.copy(response.getEntity().getContent(), writer);
+            Response r = gson.fromJson(writer.toString(), Response.class);
+            if (r.getCode() != 200) {
+                Throwable t = (Throwable) r.convert();
+                throw new ApiException(r.getCode(), t.getMessage());
+            }
+            return r;
+        } catch (Throwable t) {
+            throw new ApiException(500, t.getMessage());
+        }
     }
 
-    /**
-     * @return new short[]{red,green,blue}
-     */
-    public short[] getSkylightRGB() {
-        return null;
+    private Response callPostRequest(String url, Object data) throws ApiException {
+        try {
+            HttpPost post = new HttpPost(url);
+            post.setEntity(new StringEntity(gson.toJson(data)));
+            HttpResponse response = httpClient.execute(post);
+            StringWriter writer = new StringWriter();
+            IOUtils.copy(response.getEntity().getContent(), writer);
+            Response r = gson.fromJson(writer.toString(), Response.class);
+            if (r.getCode() != 200) {
+                Throwable t = (Throwable) r.convert();
+                throw new ApiException(r.getCode(), t.getMessage());
+            }
+            return r;
+        } catch (Throwable t) {
+            throw new ApiException(500, t.getMessage());
+        }
     }
 
-    public void setCloudIntensitiy(int percent) {
+    public void setSkylightRGB(short red, short green, short blue) throws ApiException {
+        AmbientRequest request = new AmbientRequest();
+        request.setComponent("SkyLight");
+        request.setValue(red + "," + green + "," + blue);
+        Response response = callPostRequest("http://weatherbox:8080/ambient", request);
+        try {
+            boolean success = (Boolean) response.convert();
+            if (!success) throw new ApiException(200, "Could not change Clouds");
+        } catch (ClassNotFoundException e) {
+            throw new ApiException(500, e.getMessage());
+        }
+    }
 
+
+    public short[] getSkylightRGB() throws ApiException {
+        Response response = callGetRequest("http://weatherbox:8080/ambient/Skylight");
+        try {
+            String[] split = ((String) response.convert()).split(",");
+            return new short[]{Short.parseShort(split[0]), Short.parseShort(split[1]), Short.parseShort(split[2])};
+        } catch (ClassNotFoundException e) {
+            throw new ApiException(500, e.getMessage());
+        }
+    }
+
+    public void setCloudIntensitiy(int percent) throws ApiException {
+        AmbientRequest request = new AmbientRequest();
+        request.setComponent("Cloud");
+        request.setComponent(percent + "");
+        Response response = callPostRequest("http://weatherbox:8080/ambient", request);
+        try {
+            boolean success = (Boolean) response.convert();
+            if (!success) throw new ApiException(200, "Could not change Clouds");
+        } catch (ClassNotFoundException e) {
+            throw new ApiException(500, e.getMessage());
+        }
     }
 
     public int getCloudIntensity() {
