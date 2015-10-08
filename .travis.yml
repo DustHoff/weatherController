@@ -1,4 +1,6 @@
 language: android
+notifications:
+  email: false
 env:
   global:
     # switch glibc to a memory conserving mode
