@@ -9,7 +9,7 @@ env:
     - ADB_INSTALL_TIMEOUT=10
 before_script:
   - mkdir Controller/libs
-  - wget $(wget -O - https://api.github.com/repos/DustHoff/weatherbox/releases/latest | grep 'browser_' | grep 'api' | cut -d\" -f4) -O Controller/libs/weatherbox.jar
+  - wget $(curl -s -H "Authorization: token $token" https://api.github.com/repos/DustHoff/weatherbox/releases/latest | grep 'browser_' | grep 'api' | cut -d\" -f4) -O Controller/libs/weatherbox.jar
   - echo no | android create avd --force -n test -t android-19 --abi armeabi-v7a
   - emulator -avd test -no-skin -no-audio -no-window &
   - android-wait-for-emulator
