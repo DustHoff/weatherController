@@ -113,6 +113,7 @@ public class Api {
             return CloudType.valueOf((String) response.convert());
         } catch (ClassNotFoundException e) {
             throw new ApiException(500, e.getMessage());
+        }
     }
 
     public int getRainIntensity() throws ApiException {
