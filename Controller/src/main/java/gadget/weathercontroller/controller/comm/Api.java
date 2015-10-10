@@ -149,7 +149,7 @@ public class Api {
     }
 
     /**
-     * gibt den aktuellen Nebel/Wolken wert zurück
+     * gibt den aktuellen Nebel/Wolken wert zurueck
      * @return CloudType
      * @throws ApiException
      */
@@ -163,7 +163,7 @@ public class Api {
     }
 
     /**
-     * gibt den aktuellen Regen wert zurück
+     * gibt den aktuellen Regen wert zurueck
      * @return (0-3000)
      * @throws ApiException
      */
@@ -213,7 +213,7 @@ public class Api {
     }
 
     /**
-     * gibt eine Liste der zu unuterstüzenden Städte von OpenWeatherMap zurück
+     * gibt eine Liste der zu unuterstuezenden Städte von OpenWeatherMap zurueck
      * @return
      * @throws ApiException
      */
@@ -223,7 +223,7 @@ public class Api {
     }
 
     /**
-     * gibt zurück wieviele Stunden die Wettervorhersage nutzen soll
+     * gibt zurueck wieviele Stunden die Wettervorhersage nutzen soll
      * @return
      * @throws ApiException
      */
@@ -233,7 +233,7 @@ public class Api {
     }
 
     /**
-     * setzt den wert für die Wettervorhersage in Stunden
+     * setzt den wert fuer die Wettervorhersage in Stunden
      * @param forecastHours
      * @throws ApiException
      */
@@ -250,7 +250,7 @@ public class Api {
     }
 
     /**
-     * gibt den ApiKey für OpenWeatherMap zurück
+     * gibt den ApiKey fuer OpenWeatherMap zurueck
      * @return
      * @throws ApiException
      */
@@ -260,7 +260,7 @@ public class Api {
     }
 
     /**
-     * setzt den ApiKey für OpenWeatherMap
+     * setzt den ApiKey fuer OpenWeatherMap
      * @param key
      * @throws ApiException
      */
@@ -277,7 +277,7 @@ public class Api {
     }
 
     /**
-     * gibt die Webservice URL für OpenWeatherMap zurück
+     * gibt die Webservice URL fuer OpenWeatherMap zurueck
      * @return
      * @throws ApiException
      */
@@ -325,7 +325,7 @@ public class Api {
     }
 
     /**
-     * gibt die SystemInfos zurück
+     * gibt die SystemInfos zurueck
      * @return
      * @throws ApiException
      */
