@@ -92,6 +92,15 @@ public class Api {
         return request;
     }
 
+    /**
+     * bevor diese Methode aufgerufen wird muss Api.call().disableWeatherUpdate() aufgerufen werden.
+     * setzt den Farbton des Himmels
+     *
+     * @param red   Wert 0-255
+     * @param green Wert 0-255
+     * @param blue  Wert 0-255
+     * @throws ApiException wird geworften wenn ein Problem mit der Kommunikation existert
+     */
     public void setSkylightRGB(short red, short green, short blue) throws ApiException {
         AmbientRequest request = new AmbientRequest();
         request.setComponent("SkyLight");
@@ -106,6 +115,11 @@ public class Api {
     }
 
 
+    /**
+     * gibt den aktuellen Farbwert des simulierten Himmels an
+     * @return SkyLightType (enum) es gibt vordefinierte Werte. Jedoch gibt es auch SkyLightType.FADED dieser hat veränderbare RGB Werte
+     * @throws ApiException wird geworfen wenn ein Problem mit der Komminikation existiert
+     */
     public SkyLightType getSkylightRGB() throws ApiException {
         Response response = callGetRequest("http://weatherbox:8080/ambient/Skylight");
         try {
@@ -118,6 +132,12 @@ public class Api {
         }
     }
 
+    /**
+     * bevor diese Methode aufgerufen wird muss Api.call().disableWeatherUpdate() aufgerufen werden.
+     * setzt den Nebel/Wolken wert
+     * @param value
+     * @throws ApiException
+     */
     public void setCloudIntensitiy(CloudType value) throws ApiException {
         AmbientRequest request = new AmbientRequest();
         request.setComponent("Cloud");
@@ -131,6 +151,11 @@ public class Api {
         }
     }
 
+    /**
+     * gibt den aktuellen Nebel/Wolken wert zurück
+     * @return CloudType
+     * @throws ApiException
+     */
     public CloudType getCloudIntensity() throws ApiException {
         Response response = callGetRequest("http://weatherbox:8080/ambient/Clouds");
         try {
@@ -140,6 +165,11 @@ public class Api {
         }
     }
 
+    /**
+     * gibt den aktuellen Regen wert zurück
+     * @return (0-3000)
+     * @throws ApiException
+     */
     public int getRainIntensity() throws ApiException {
         Response response = callGetRequest("http://weatherbox:8080/ambient/Rain");
         try {
@@ -149,6 +179,12 @@ public class Api {
         }
     }
 
+    /**
+     * bevor diese Methode aufgerufen wird muss Api.call().disableWeatherUpdate() aufgerufen werden.
+     *
+     * @param value
+     * @throws ApiException
+     */
     public void setRainIntensity(int value) throws ApiException {
         AmbientRequest request = new AmbientRequest();
         request.setComponent("Rain");
@@ -162,6 +198,11 @@ public class Api {
         }
     }
 
+    /**
+     * setzt die aktuelle aktuelle stadt muss ein wert von Api.call().getAvailableCities(); sein
+     * @param city
+     * @throws ApiException
+     */
     public void setCity(City city) throws ApiException {
         loadConfig();
         WeatherRequest request = changeConfig();
@@ -174,16 +215,31 @@ public class Api {
         }
     }
 
+    /**
+     * gibt eine Liste der zu unuterstüzenden Städte von OpenWeatherMap zurück
+     * @return
+     * @throws ApiException
+     */
     public City[] getAvailableCities() throws ApiException {
         loadConfig();
         return config.getCities();
     }
 
+    /**
+     * gibt zurück wieviele Stunden die Wettervorhersage nutzen soll
+     * @return
+     * @throws ApiException
+     */
     public int getForecastHours() throws ApiException {
         loadConfig();
         return config.getForecast();
     }
 
+    /**
+     * setzt den wert für die Wettervorhersage in Stunden
+     * @param forecastHours
+     * @throws ApiException
+     */
     public void setForecastHours(int forecastHours) throws ApiException {
         loadConfig();
         WeatherRequest request = changeConfig();
@@ -196,11 +252,21 @@ public class Api {
         }
     }
 
+    /**
+     * gibt den ApiKey für OpenWeatherMap zurück
+     * @return
+     * @throws ApiException
+     */
     public String getApiKey() throws ApiException {
         loadConfig();
         return config.getKey();
     }
 
+    /**
+     * setzt den ApiKey für OpenWeatherMap
+     * @param key
+     * @throws ApiException
+     */
     public void setApiKey(String key) throws ApiException {
         loadConfig();
         WeatherRequest request = changeConfig();
@@ -213,11 +279,21 @@ public class Api {
         }
     }
 
+    /**
+     * gibt die Webservice URL für OpenWeatherMap zurück
+     * @return
+     * @throws ApiException
+     */
     public String getWeatherURL() throws ApiException {
         loadConfig();
         return config.getUrl();
     }
 
+    /**
+     * setzt die Webservice URL f+r OpenWeatherMap
+     * @param url
+     * @throws ApiException
+     */
     public void setWeatherURL(String url) throws ApiException {
         loadConfig();
         WeatherRequest request = changeConfig();
@@ -231,18 +307,31 @@ public class Api {
 
     }
 
+    /**
+     * deaktiviert die automatischen Wetterupdates in der Box
+     * @throws ApiException
+     */
     public void disableWeatherUpdate() throws ApiException {
         SysInfoRequest request = new SysInfoRequest();
         request.setMode(false);
         callPostRequest("http://weatherbox:8080/system", request);
     }
 
+    /**
+     * aktiviert die automatischen Wetterupdates in der Box
+     * @throws ApiException
+     */
     public void enableWeatherUpdate() throws ApiException {
         SysInfoRequest request = new SysInfoRequest();
         request.setMode(true);
         callPostRequest("http://weatherbox:8080/system", request);
     }
 
+    /**
+     * gibt die SystemInfos zurück
+     * @return
+     * @throws ApiException
+     */
     public SysInfoResponse getSystemInfo() throws ApiException {
         Response response = callGetRequest("http://weatherbox:8080/system");
         try {
