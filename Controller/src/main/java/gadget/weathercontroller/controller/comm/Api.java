@@ -1,10 +1,10 @@
 package gadget.weathercontroller.controller.comm;
 
 import com.google.gson.Gson;
-import gadget.component.api.data.AmbientRequest;
-import gadget.component.api.data.Response;
+import gadget.component.api.data.*;
 import gadget.component.hardware.data.CloudType;
 import gadget.component.hardware.data.SkyLightType;
+import gadget.component.owm.data.City;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -22,6 +22,7 @@ public class Api {
     private static Api instance;
     private final DefaultHttpClient httpClient;
     private final Gson gson;
+    private WeatherResponse config;
 
     private Api() {
         gson = new Gson();
@@ -66,6 +67,29 @@ public class Api {
         } catch (Throwable t) {
             throw new ApiException(500, t.getMessage());
         }
+    }
+
+    private void loadConfig() throws ApiException {
+        Response response = callGetRequest("http://weatherbox:8080/weather");
+        try {
+            config = (WeatherResponse) response.convert();
+        } catch (ClassNotFoundException e) {
+            throw new ApiException(500, e.getMessage());
+        }
+    }
+
+    private WeatherRequest changeConfig() {
+        WeatherRequest request = new WeatherRequest();
+        request.setCity(config.getCity());
+        request.setUseRain(config.isUseRain());
+        request.setUseSky(config.isUseSky());
+        request.setUseClouds(config.isUseClouds());
+        request.setSkyled(config.getSkyled());
+        request.setUrl(config.getUrl());
+        request.setDlcity(config.getDlcity());
+        request.setForecast(config.getForecast());
+        request.setKey(config.getKey());
+        return request;
     }
 
     public void setSkylightRGB(short red, short green, short blue) throws ApiException {
@@ -138,35 +162,93 @@ public class Api {
         }
     }
 
-    public void setCity(String name) {
+    public void setCity(City city) throws ApiException {
+        loadConfig();
+        WeatherRequest request = changeConfig();
+        request.setCity(city.getName());
+        Response reponse = callPostRequest("http://weatherbox:8080/weather", request);
+        try {
+            config = (WeatherResponse) reponse.convert();
+        } catch (ClassNotFoundException e) {
+            throw new ApiException(500, e.getMessage());
+        }
+    }
+
+    public City[] getAvailableCities() throws ApiException {
+        loadConfig();
+        return config.getCities();
+    }
+
+    public int getForecastHours() throws ApiException {
+        loadConfig();
+        return config.getForecast();
+    }
+
+    public void setForecastHours(int forecastHours) throws ApiException {
+        loadConfig();
+        WeatherRequest request = changeConfig();
+        request.setForecast(forecastHours);
+        Response reponse = callPostRequest("http://weatherbox:8080/weather", request);
+        try {
+            config = (WeatherResponse) reponse.convert();
+        } catch (ClassNotFoundException e) {
+            throw new ApiException(500, e.getMessage());
+        }
+    }
+
+    public String getApiKey() throws ApiException {
+        loadConfig();
+        return config.getKey();
+    }
+
+    public void setApiKey(String key) throws ApiException {
+        loadConfig();
+        WeatherRequest request = changeConfig();
+        request.setKey(key);
+        Response reponse = callPostRequest("http://weatherbox:8080/weather", request);
+        try {
+            config = (WeatherResponse) reponse.convert();
+        } catch (ClassNotFoundException e) {
+            throw new ApiException(500, e.getMessage());
+        }
+    }
+
+    public String getWeatherURL() throws ApiException {
+        loadConfig();
+        return config.getUrl();
+    }
+
+    public void setWeatherURL(String url) throws ApiException {
+        loadConfig();
+        WeatherRequest request = changeConfig();
+        request.setUrl(url);
+        Response reponse = callPostRequest("http://weatherbox:8080/weather", request);
+        try {
+            config = (WeatherResponse) reponse.convert();
+        } catch (ClassNotFoundException e) {
+            throw new ApiException(500, e.getMessage());
+        }
 
     }
 
-    public Object[] getAvailableCities() {
-        return null;
+    public void disableWeatherUpdate() throws ApiException {
+        SysInfoRequest request = new SysInfoRequest();
+        request.setMode(false);
+        callPostRequest("http://weatherbox:8080/system", request);
     }
 
-    public int getForecastHours() {
-        return 0;
+    public void enableWeatherUpdate() throws ApiException {
+        SysInfoRequest request = new SysInfoRequest();
+        request.setMode(true);
+        callPostRequest("http://weatherbox:8080/system", request);
     }
 
-    public void setForecastHours(int forecastHours) {
-
-    }
-
-    public String getApiKey() {
-        return "";
-    }
-
-    public void setApiKey(String key) {
-
-    }
-
-    public String getWeatherURL() {
-        return "";
-    }
-
-    public void setWeatherURL(String url) {
-
+    public SysInfoResponse getSystemInfo() throws ApiException {
+        Response response = callGetRequest("http://weatherbox:8080/system");
+        try {
+            return (SysInfoResponse) response.convert();
+        } catch (ClassNotFoundException e) {
+            throw new ApiException(500, e.getMessage());
+        }
     }
 }
