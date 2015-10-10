@@ -1,18 +1,14 @@
 package gadget.weathercontroller.controller.comm;
 
 import com.google.gson.Gson;
+import com.squareup.okhttp.MediaType;
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.RequestBody;
 import gadget.component.api.data.*;
 import gadget.component.hardware.data.CloudType;
 import gadget.component.hardware.data.SkyLightType;
 import gadget.component.owm.data.City;
-import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-
-import java.io.StringWriter;
 
 /**
  * Created by Dustin on 06.10.2015.
@@ -20,13 +16,13 @@ import java.io.StringWriter;
 public class Api {
 
     private static Api instance;
-    private final DefaultHttpClient httpClient;
+    private final OkHttpClient httpClient;
     private final Gson gson;
     private WeatherResponse config;
 
     private Api() {
         gson = new Gson();
-        httpClient = new DefaultHttpClient();
+        httpClient = new OkHttpClient();
     }
 
     public static Api call() {
@@ -36,11 +32,10 @@ public class Api {
 
     private Response callGetRequest(String url) throws ApiException {
         try {
-            HttpGet post = new HttpGet(url);
-            HttpResponse response = httpClient.execute(post);
-            StringWriter writer = new StringWriter();
-            IOUtils.copy(response.getEntity().getContent(), writer);
-            Response r = gson.fromJson(writer.toString(), Response.class);
+            Request request = new Request.Builder().url(url).build();
+            com.squareup.okhttp.Response response = httpClient.newCall(request).execute();
+
+            Response r = gson.fromJson(response.body().string(), Response.class);
             if (r.getCode() != 200) {
                 Throwable t = (Throwable) r.convert();
                 throw new ApiException(r.getCode(), t.getMessage());
@@ -53,12 +48,14 @@ public class Api {
 
     private Response callPostRequest(String url, Object data) throws ApiException {
         try {
-            HttpPost post = new HttpPost(url);
-            post.setEntity(new StringEntity(gson.toJson(data)));
-            HttpResponse response = httpClient.execute(post);
-            StringWriter writer = new StringWriter();
-            IOUtils.copy(response.getEntity().getContent(), writer);
-            Response r = gson.fromJson(writer.toString(), Response.class);
+            MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+            RequestBody body = RequestBody.create(JSON, gson.toJson(data));
+            Request request = new Request.Builder()
+                    .url(url)
+                    .post(body)
+                    .build();
+            com.squareup.okhttp.Response response = httpClient.newCall(request).execute();
+            Response r = gson.fromJson(response.body().string(), Response.class);
             if (r.getCode() != 200) {
                 Throwable t = (Throwable) r.convert();
                 throw new ApiException(r.getCode(), t.getMessage());
