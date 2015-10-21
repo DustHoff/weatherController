@@ -114,7 +114,7 @@ public class Api {
 
     /**
      * gibt den aktuellen Farbwert des simulierten Himmels an
-     * @return SkyLightType (enum) es gibt vordefinierte Werte. Jedoch gibt es auch SkyLightType.FADED dieser hat veränderbare RGB Werte
+     * @return SkyLightType (enum) es gibt vordefinierte Werte. Jedoch gibt es auch SkyLightType.FADED dieser hat veraenderbare RGB Werte
      * @throws ApiException wird geworfen wenn ein Problem mit der Komminikation existiert
      */
     public SkyLightType getSkylightRGB() throws ApiException {
@@ -213,7 +213,7 @@ public class Api {
     }
 
     /**
-     * gibt eine Liste der zu unuterstuezenden Städte von OpenWeatherMap zurueck
+     * gibt eine Liste der zu unuterstuezenden Staedte von OpenWeatherMap zurueck
      * @return
      * @throws ApiException
      */

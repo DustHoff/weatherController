@@ -5,10 +5,5 @@
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
     <string name="modeName">Ambient</string>
-    <string-array name="mist">
-        <item>None</item>
-        <item>Cloudy</item>
-        <item>Mist</item>
-    </string-array>
     <string name="notConnected">Nicht Verbunden</string>
 </resources>

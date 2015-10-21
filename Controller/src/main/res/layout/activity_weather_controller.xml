@@ -53,7 +53,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:id="@+id/mist" android:layout_gravity="center_horizontal" android:spinnerMode="dropdown"
-                android:entries="@array/mist" android:focusable="true"/>
+                android:focusable="true"/>
         <SeekBar
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -63,7 +63,7 @@
     <LinearLayout
             android:orientation="vertical"
             android:layout_width="fill_parent"
-            android:layout_height="fill_parent" android:id="@+id/info">
+            android:layout_height="fill_parent" android:id="@+id/info" android:visibility="visible">
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
