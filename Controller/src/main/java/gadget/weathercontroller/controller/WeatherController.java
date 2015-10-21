@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewPropertyAnimator;
 import android.widget.*;
@@ -90,7 +91,8 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
             try {
                 Api.call().disableWeatherUpdate();
             } catch (ApiException e) {
-                //return;
+                Log.e(getClass().getPackage().getName(), e.getMessage());
+                return;
             }
             runOnUiThread(new Runnable() {
                 @Override

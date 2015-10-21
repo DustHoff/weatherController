@@ -36,6 +36,8 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
                 throw new ApiException(500, "not Mocked");
             }
         });
+        Mockito.doNothing().when(api).enableWeatherUpdate();
+        Mockito.doNothing().when(api).disableWeatherUpdate();
         Field field = Api.class.getDeclaredField("instance");
         field.setAccessible(true);
         field.set(api, api);
@@ -43,11 +45,13 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
     }
 
 
-    public void testChangeMode() throws Throwable {
+    public void testChangeModeAmbient() throws Throwable {
+        Espresso.onView(ViewMatchers.withId(R.id.info)).check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
+        Espresso.onView(ViewMatchers.withId(R.id.ambient)).check(ViewAssertions.matches(ViewMatchers.withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
+
         Espresso.onView(ViewMatchers.withId(R.id.modeSwitch)).perform(ViewActions.click());
 
         Espresso.onView(ViewMatchers.withId(R.id.ambient)).check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
         Espresso.onView(ViewMatchers.withId(R.id.info)).check(ViewAssertions.matches(ViewMatchers.withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
-
     }
 }
