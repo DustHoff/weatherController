@@ -6,6 +6,8 @@ import android.support.test.espresso.action.ViewActions;
 import android.support.test.espresso.assertion.ViewAssertions;
 import android.support.test.espresso.matcher.ViewMatchers;
 import android.test.ActivityInstrumentationTestCase2;
+import gadget.component.api.data.SysInfoResponse;
+import gadget.component.hardware.data.CloudType;
 import gadget.weathercontroller.controller.comm.Api;
 import gadget.weathercontroller.controller.comm.ApiException;
 import org.mockito.Mockito;
@@ -38,12 +40,24 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
         });
         Mockito.doNothing().when(api).enableWeatherUpdate();
         Mockito.doNothing().when(api).disableWeatherUpdate();
+
+        SysInfoResponse response = new SysInfoResponse();
+        response.setUptime(1000);
+        response.setMode(false);
+        response.setClouds(CloudType.CLOUDY.name());
+        response.setTemperature("10");
+        response.setPrecipitation("10%");
+        Mockito.doReturn(response).when(api).getSystemInfo();
         Field field = Api.class.getDeclaredField("instance");
         field.setAccessible(true);
         field.set(api, api);
         weatherController = getActivity();
     }
 
+    public void testCheckWeatherText() throws Throwable {
+        Espresso.onView(ViewMatchers.withId(R.id.temperature)).check(ViewAssertions.matches(ViewMatchers.withText("10")));
+        Espresso.onView(ViewMatchers.withId(R.id.clouds)).check(ViewAssertions.matches(ViewMatchers.withText(CloudType.CLOUDY.name())));
+    }
 
     public void testChangeModeAmbient() throws Throwable {
         Espresso.onView(ViewMatchers.withId(R.id.info)).check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
