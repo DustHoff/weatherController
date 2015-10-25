@@ -16,7 +16,7 @@ before_script:
   - adb shell input keyevent 82 &
 android:
   components:
-    - build-tools-23.0.1
+    - build-tools-23.1.0
 
     # The SDK version used to compile your project
     - android-23
