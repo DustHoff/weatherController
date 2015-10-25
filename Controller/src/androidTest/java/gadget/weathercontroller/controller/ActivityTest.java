@@ -4,12 +4,18 @@ import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.action.ViewActions;
 import android.support.test.espresso.assertion.ViewAssertions;
+import android.support.test.espresso.matcher.BoundedMatcher;
 import android.support.test.espresso.matcher.ViewMatchers;
 import android.test.ActivityInstrumentationTestCase2;
+import android.view.View;
+import android.widget.SeekBar;
 import gadget.component.api.data.SysInfoResponse;
 import gadget.component.hardware.data.CloudType;
+import gadget.component.hardware.data.SkyLightType;
 import gadget.weathercontroller.controller.comm.Api;
 import gadget.weathercontroller.controller.comm.ApiException;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
 import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -40,6 +46,7 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
         });
         Mockito.doNothing().when(api).enableWeatherUpdate();
         Mockito.doNothing().when(api).disableWeatherUpdate();
+        Mockito.when(api.getSkylightRGB()).thenReturn(SkyLightType.DAY);
 
         SysInfoResponse response = new SysInfoResponse();
         response.setUptime(1000);
@@ -67,5 +74,22 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
 
         Espresso.onView(ViewMatchers.withId(R.id.ambient)).check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
         Espresso.onView(ViewMatchers.withId(R.id.info)).check(ViewAssertions.matches(ViewMatchers.withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
+        Espresso.onView(ViewMatchers.withId(R.id.red)).check(ViewAssertions.matches(SeekbarPosition(SkyLightType.DAY.getRed())));
+        Espresso.onView(ViewMatchers.withId(R.id.green)).check(ViewAssertions.matches(SeekbarPosition(SkyLightType.DAY.getGreen())));
+        Espresso.onView(ViewMatchers.withId(R.id.blue)).check(ViewAssertions.matches(SeekbarPosition(SkyLightType.DAY.getBlue())));
+    }
+
+    private Matcher<View> SeekbarPosition(final int value) {
+        return new BoundedMatcher<View, SeekBar>(SeekBar.class) {
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("Seekbar position exprected: " + value);
+            }
+
+            @Override
+            protected boolean matchesSafely(SeekBar seekBar) {
+                return seekBar.getProgress() == value;
+            }
+        };
     }
 }

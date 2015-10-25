@@ -12,6 +12,7 @@ import android.view.ViewPropertyAnimator;
 import android.widget.*;
 import gadget.component.api.data.SysInfoResponse;
 import gadget.component.hardware.data.CloudType;
+import gadget.component.hardware.data.SkyLightType;
 import gadget.weathercontroller.controller.comm.Api;
 import gadget.weathercontroller.controller.comm.ApiException;
 
@@ -89,7 +90,15 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
 
         if (isChecked) {
             try {
+                Log.i(getClass().getPackage().getName(), "disable Weather update");
                 Api.call().disableWeatherUpdate();
+                Log.i(getClass().getPackage().getName(), "update color seekbar position");
+                SkyLightType color = Api.call().getSkylightRGB();
+                ((SeekBar) findViewById(R.id.blue)).setProgress(color.getBlue());
+                ((SeekBar) findViewById(R.id.green)).setProgress(color.getGreen());
+                ((SeekBar) findViewById(R.id.red)).setProgress(color.getRed());
+                Log.i(getClass().getPackage().getName(), "update rain seekbar position");
+                ((SeekBar) findViewById(R.id.rain)).setProgress(Api.call().getRainIntensity());
             } catch (ApiException e) {
                 Log.e(getClass().getPackage().getName(), e.getMessage());
                 return;
