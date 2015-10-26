@@ -46,7 +46,8 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
         });
         Mockito.doNothing().when(api).enableWeatherUpdate();
         Mockito.doNothing().when(api).disableWeatherUpdate();
-        Mockito.when(api.getSkylightRGB()).thenReturn(SkyLightType.DAY);
+        Mockito.doReturn(SkyLightType.DAY).when(api).getSkylightRGB();
+        Mockito.doReturn(100).when(api).getRainIntensity();
 
         SysInfoResponse response = new SysInfoResponse();
         response.setUptime(1000);
@@ -77,6 +78,7 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
         Espresso.onView(ViewMatchers.withId(R.id.red)).check(ViewAssertions.matches(SeekbarPosition(SkyLightType.DAY.getRed())));
         Espresso.onView(ViewMatchers.withId(R.id.green)).check(ViewAssertions.matches(SeekbarPosition(SkyLightType.DAY.getGreen())));
         Espresso.onView(ViewMatchers.withId(R.id.blue)).check(ViewAssertions.matches(SeekbarPosition(SkyLightType.DAY.getBlue())));
+        Espresso.onView(ViewMatchers.withId(R.id.rain)).check(ViewAssertions.matches(SeekbarPosition(100)));
     }
 
     private Matcher<View> SeekbarPosition(final int value) {
