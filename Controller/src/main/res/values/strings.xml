@@ -6,4 +6,8 @@
     <string name="action_settings">Settings</string>
     <string name="modeName">Ambient</string>
     <string name="notConnected">Nicht Verbunden</string>
+
+    <string name="title_activity_splash_screen">SplashScreen</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
 </resources>
