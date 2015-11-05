@@ -3,29 +3,35 @@
           package="gadget.weathercontroller.controller">
 
     <uses-permission android:name="android.permission.INTERNET"/>
-
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <application
             android:allowBackup="true"
             android:icon="@mipmap/logo"
-            android:label="@string/app_name"
-            android:theme="@style/AppTheme">
+            android:label="@string/app_name">
         <activity
                 android:name=".WeatherController"
                 android:label="@string/app_name"
-                android:screenOrientation="portrait">
-        </activity>
-        <activity
-                android:name=".SplashScreen"
-                android:configChanges="orientation|keyboardHidden|screenSize"
-                android:label="@string/app_name"
                 android:screenOrientation="portrait"
-                android:theme="@style/FullscreenTheme">
+                android:theme="@style/AppTheme">
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
+        <!--        <activity
+                        android:name=".SplashScreen"
+                        android:configChanges="orientation|keyboardHidden|screenSize"
+                        android:label="@string/app_name"
+                        android:screenOrientation="portrait"
+                        android:theme="@style/FullscreenTheme">
+                    <intent-filter>
+                        <action android:name="android.intent.action.MAIN"/>
+
+                        <category android:name="android.intent.category.LAUNCHER"/>
+                    </intent-filter>
+                </activity>-->
     </application>
 
 </manifest>

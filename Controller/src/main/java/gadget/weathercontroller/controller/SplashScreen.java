@@ -3,8 +3,13 @@ package gadget.weathercontroller.controller;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.os.Handler;
+import android.widget.TextView;
+import gadget.weathercontroller.controller.comm.Api;
 import gadget.weathercontroller.controller.util.SystemUiHider;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 
 /**
@@ -16,14 +21,32 @@ import gadget.weathercontroller.controller.util.SystemUiHider;
 public class SplashScreen extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_splash_screen);
-        new Handler().postDelayed(new Runnable() {
+        final ScheduledExecutorService exec = Executors.newSingleThreadScheduledExecutor();
+        exec.scheduleAtFixedRate(new Runnable() {
+            private int retries = 0;
             @Override
             public void run() {
-                Intent i = new Intent(SplashScreen.this, WeatherController.class);
-                startActivity(i);
-                finish();
+                if (Api.call().isAvailable()) {
+                    Intent i = new Intent(SplashScreen.this, WeatherController.class);
+                    startActivity(i);
+                    exec.shutdown();
+                    finish();
+                } else {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            ((TextView) findViewById(R.id.status)).setText("Connecting... retry " + retries);
+                        }
+                    });
+                    retries++;
+                    if (retries > 5) {
+                        exec.shutdown();
+                        finish();
+                    }
+                }
             }
-        }, 3000);
+        }, 1000, 500, TimeUnit.MILLISECONDS);
     }
 }

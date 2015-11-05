@@ -2,9 +2,9 @@ package gadget.weathercontroller.controller;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
-import android.content.Context;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -16,10 +16,12 @@ import gadget.component.hardware.data.SkyLightType;
 import gadget.weathercontroller.controller.comm.Api;
 import gadget.weathercontroller.controller.comm.ApiException;
 
+import java.util.Timer;
+import java.util.TimerTask;
+
 
 public class WeatherController extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, SeekBar.OnSeekBarChangeListener, AdapterView.OnItemSelectedListener {
 
-    private static Context context;
     private LinearLayout weatherInfo;
     private LinearLayout ambient;
     private int red;
@@ -27,14 +29,13 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
     private int blue;
     private int rain;
 
-    public static Context getContext() {
-        return context;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        context = this;
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+        StrictMode.setThreadPolicy(policy);
+
         setContentView(R.layout.activity_weather_controller);
         Switch button = (Switch) findViewById(R.id.modeSwitch);
         button.setOnCheckedChangeListener(this);
@@ -51,30 +52,43 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
         Spinner mist = (Spinner) findViewById(R.id.mist);
         mist.setAdapter(new ArrayAdapter<CloudType>(this, android.R.layout.simple_spinner_item, CloudType.values()));
         mist.setOnItemSelectedListener(this);
+
+        Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                updateWeather();
+            }
+        }, 5000, 60000);
     }
 
-    @Override
+/*    @Override
     protected void onPostResume() {
-        updateWeather();
         super.onPostResume();
-    }
+        updateWeather();
+    }*/
 
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
-        updateWeather();
         super.onPostCreate(savedInstanceState);
+        updateWeather();
     }
 
     private void updateWeather() {
         try {
-            SysInfoResponse weather = Api.call().getSystemInfo();
-            ((TextView) findViewById(R.id.temperature)).setText(weather.getTemperature());
-            ((TextView) findViewById(R.id.precipitation)).setText(weather.getPrecipitation());
-            ((TextView) findViewById(R.id.humidity)).setText(weather.getHumidity());
-            ((TextView) findViewById(R.id.clouds)).setText(weather.getClouds());
+            final SysInfoResponse weather = Api.call().getSystemInfo();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    ((TextView) findViewById(R.id.temperature)).setText(weather.getTemperature());
+                    ((TextView) findViewById(R.id.precipitation)).setText(weather.getPrecipitation());
+                    ((TextView) findViewById(R.id.humidity)).setText(weather.getHumidity());
+                    ((TextView) findViewById(R.id.clouds)).setText(weather.getClouds());
+                }
+            });
 
         } catch (ApiException e) {
-            Toast.makeText(this, R.string.notConnected, Toast.LENGTH_LONG).show();
+            Log.e(getClass().getPackage().getName(), "Problem while updating Weather: " + e.getMessage(), e);
         }
 
     }
@@ -87,7 +101,6 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
      */
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-
         if (isChecked) {
             try {
                 Log.i(getClass().getPackage().getName(), "disable Weather update");
@@ -100,7 +113,8 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
                 Log.i(getClass().getPackage().getName(), "update rain seekbar position");
                 ((SeekBar) findViewById(R.id.rain)).setProgress(Api.call().getRainIntensity());
             } catch (ApiException e) {
-                Log.e(getClass().getPackage().getName(), e.getMessage());
+                Log.e(getClass().getPackage().getName(), "Problem while changing mode", e);
+                ((Switch) findViewById(R.id.modeSwitch)).setChecked(false);
                 return;
             }
             runOnUiThread(new Runnable() {
@@ -154,8 +168,13 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
         if (seekBar.getId() == R.id.green) green = progress;
         if (seekBar.getId() == R.id.blue) blue = progress;
         if (seekBar.getId() == R.id.rain) rain = progress;
-        ImageView color = (ImageView) findViewById(R.id.weather);
-        color.setBackgroundColor(Color.rgb(red, green, blue));
+        final ImageView color = (ImageView) findViewById(R.id.weather);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                color.setBackgroundColor(Color.rgb(red, green, blue));
+            }
+        });
     }
 
     @Override
@@ -168,7 +187,7 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
             Api.call().setSkylightRGB((short) red, (short) green, (short) blue);
             Api.call().setRainIntensity(rain);
         } catch (ApiException e) {
-            Toast.makeText(this, R.string.notConnected, Toast.LENGTH_LONG).show();
+            Log.e(getClass().getPackage().getName(), "Problem while stop touch tracking", e);
         }
     }
 
@@ -180,7 +199,7 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
         try {
             Api.call().setCloudIntensitiy(type);
         } catch (ApiException e) {
-            Toast.makeText(this, R.string.notConnected, Toast.LENGTH_LONG).show();
+            Log.e(getClass().getPackage().getName(), "Problem while selecting item", e);
         }
 
     }

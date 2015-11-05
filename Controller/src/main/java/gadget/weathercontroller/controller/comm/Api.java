@@ -1,5 +1,6 @@
 package gadget.weathercontroller.controller.comm;
 
+import android.util.Log;
 import com.google.gson.Gson;
 import com.squareup.okhttp.MediaType;
 import com.squareup.okhttp.OkHttpClient;
@@ -8,7 +9,12 @@ import com.squareup.okhttp.RequestBody;
 import gadget.component.api.data.*;
 import gadget.component.hardware.data.CloudType;
 import gadget.component.hardware.data.SkyLightType;
-import gadget.component.owm.data.City;
+import gadget.component.job.owm.data.City;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.List;
 
 /**
  * Created by Dustin on 06.10.2015.
@@ -30,44 +36,64 @@ public class Api {
         return instance;
     }
 
+    private Response analyse(com.squareup.okhttp.Response response) throws IOException, ApiException, ClassNotFoundException {
+        String message = response.body().string();
+        Log.d(getClass().getPackage().getName(), "Response: " + message);
+        Response r = gson.fromJson(message, Response.class);
+        Log.d(getClass().getPackage().getName(), "Code: " + r.getCode());
+        Log.d(getClass().getPackage().getName(), "Type: " + r.getType());
+        if (r.getCode() != 200) {
+            Throwable t = (Throwable) r.convert();
+            throw new ApiException(r.getCode(), t.getMessage());
+        }
+        return r;
+    }
     private Response callGetRequest(String url) throws ApiException {
+        if (!isAvailable()) throw new ApiException(500, "Device not available");
         try {
-            Request request = new Request.Builder().url(url).build();
-            com.squareup.okhttp.Response response = httpClient.newCall(request).execute();
+            Request request = new Request.Builder().url("http://weatherbox:8080" + url).build();
+            Log.d(getClass().getPackage().getName(), "URL: " + request.urlString());
 
-            Response r = gson.fromJson(response.body().string(), Response.class);
-            if (r.getCode() != 200) {
-                Throwable t = (Throwable) r.convert();
-                throw new ApiException(r.getCode(), t.getMessage());
-            }
-            return r;
-        } catch (Throwable t) {
+            com.squareup.okhttp.Response response = httpClient.newCall(request).execute();
+            Log.d(getClass().getPackage().getName(), "Requesst successful: " + response.isSuccessful());
+            if (response.isSuccessful()) {
+                return analyse(response);
+            } else throw new IOException("Something went wrong");
+        } catch (IOException t) {
+            Log.e(getClass().getPackage().getName(), "Problem while Get Request", t);
             throw new ApiException(500, t.getMessage());
+        } catch (ClassNotFoundException e) {
+            Log.e(getClass().getPackage().getName(), "Problem while Get Request", e);
+            throw new ApiException(500, e.getMessage());
         }
     }
 
     private Response callPostRequest(String url, Object data) throws ApiException {
+        if (!isAvailable()) throw new ApiException(500, "Device not available");
         try {
             MediaType JSON = MediaType.parse("application/json; charset=utf-8");
             RequestBody body = RequestBody.create(JSON, gson.toJson(data));
             Request request = new Request.Builder()
-                    .url(url)
+                    .url("http://weatherbox:8080" + url)
                     .post(body)
                     .build();
+            Log.d(getClass().getPackage().getName(), "URL: " + request.urlString());
             com.squareup.okhttp.Response response = httpClient.newCall(request).execute();
-            Response r = gson.fromJson(response.body().string(), Response.class);
-            if (r.getCode() != 200) {
-                Throwable t = (Throwable) r.convert();
-                throw new ApiException(r.getCode(), t.getMessage());
-            }
-            return r;
-        } catch (Throwable t) {
+            Log.d(getClass().getPackage().getName(), "Requesst successful: " + response.isSuccessful());
+            if (response.isSuccessful()) {
+                return analyse(response);
+            } else throw new IOException(response.message());
+        } catch (IOException t) {
+            Log.e(getClass().getPackage().getName(), "Problem while Post Request", t);
             throw new ApiException(500, t.getMessage());
+        } catch (ClassNotFoundException e) {
+            Log.e(getClass().getPackage().getName(), "Problem while Post Request", e);
+            throw new ApiException(500, e.getMessage());
         }
     }
 
     private void loadConfig() throws ApiException {
-        Response response = callGetRequest("http://weatherbox:8080/weather");
+        Response response = callGetRequest("/weather");
         try {
             config = (WeatherResponse) response.convert();
         } catch (ClassNotFoundException e) {
@@ -102,7 +128,7 @@ public class Api {
         AmbientRequest request = new AmbientRequest();
         request.setComponent("SkyLight");
         request.setValue(red + "," + green + "," + blue);
-        Response response = callPostRequest("http://weatherbox:8080/ambient", request);
+        Response response = callPostRequest("/ambient", request);
         try {
             boolean success = (Boolean) response.convert();
             if (!success) throw new ApiException(200, "Could not change Clouds");
@@ -114,11 +140,12 @@ public class Api {
 
     /**
      * gibt den aktuellen Farbwert des simulierten Himmels an
+     *
      * @return SkyLightType (enum) es gibt vordefinierte Werte. Jedoch gibt es auch SkyLightType.FADED dieser hat veraenderbare RGB Werte
      * @throws ApiException wird geworfen wenn ein Problem mit der Komminikation existiert
      */
     public SkyLightType getSkylightRGB() throws ApiException {
-        Response response = callGetRequest("http://weatherbox:8080/ambient/Skylight");
+        Response response = callGetRequest("/ambient/Skylight");
         try {
             String[] split = ((String) response.convert()).split(",");
             SkyLightType type = SkyLightType.FADED;
@@ -132,6 +159,7 @@ public class Api {
     /**
      * bevor diese Methode aufgerufen wird muss Api.call().disableWeatherUpdate() aufgerufen werden.
      * setzt den Nebel/Wolken wert
+     *
      * @param value
      * @throws ApiException
      */
@@ -139,7 +167,7 @@ public class Api {
         AmbientRequest request = new AmbientRequest();
         request.setComponent("Cloud");
         request.setComponent(value.name());
-        Response response = callPostRequest("http://weatherbox:8080/ambient", request);
+        Response response = callPostRequest("/ambient", request);
         try {
             boolean success = (Boolean) response.convert();
             if (!success) throw new ApiException(200, "Could not change Clouds");
@@ -150,11 +178,12 @@ public class Api {
 
     /**
      * gibt den aktuellen Nebel/Wolken wert zurueck
+     *
      * @return CloudType
      * @throws ApiException
      */
     public CloudType getCloudIntensity() throws ApiException {
-        Response response = callGetRequest("http://weatherbox:8080/ambient/Clouds");
+        Response response = callGetRequest("/ambient/Clouds");
         try {
             return CloudType.valueOf((String) response.convert());
         } catch (ClassNotFoundException e) {
@@ -164,11 +193,12 @@ public class Api {
 
     /**
      * gibt den aktuellen Regen wert zurueck
+     *
      * @return (0-3000)
      * @throws ApiException
      */
     public int getRainIntensity() throws ApiException {
-        Response response = callGetRequest("http://weatherbox:8080/ambient/Rain");
+        Response response = callGetRequest("/ambient/Rain");
         try {
             return Integer.parseInt((String) response.convert());
         } catch (ClassNotFoundException e) {
@@ -186,7 +216,7 @@ public class Api {
         AmbientRequest request = new AmbientRequest();
         request.setComponent("Rain");
         request.setValue(value + "");
-        Response response = callPostRequest("http://weatherbox:8080/ambient", request);
+        Response response = callPostRequest("/ambient", request);
         try {
             boolean success = (Boolean) response.convert();
             if (!success) throw new ApiException(200, "Could not change Rain");
@@ -197,6 +227,7 @@ public class Api {
 
     /**
      * setzt die aktuelle aktuelle stadt muss ein wert von Api.call().getAvailableCities(); sein
+     *
      * @param city
      * @throws ApiException
      */
@@ -204,7 +235,7 @@ public class Api {
         loadConfig();
         WeatherRequest request = changeConfig();
         request.setCity(city.getName());
-        Response reponse = callPostRequest("http://weatherbox:8080/weather", request);
+        Response reponse = callPostRequest("/weather", request);
         try {
             config = (WeatherResponse) reponse.convert();
         } catch (ClassNotFoundException e) {
@@ -214,16 +245,18 @@ public class Api {
 
     /**
      * gibt eine Liste der zu unuterstuezenden Staedte von OpenWeatherMap zurueck
+     *
      * @return
      * @throws ApiException
      */
-    public City[] getAvailableCities() throws ApiException {
+    public List<City> getAvailableCities() throws ApiException {
         loadConfig();
         return config.getCities();
     }
 
     /**
      * gibt zurueck wieviele Stunden die Wettervorhersage nutzen soll
+     *
      * @return
      * @throws ApiException
      */
@@ -234,6 +267,7 @@ public class Api {
 
     /**
      * setzt den wert fuer die Wettervorhersage in Stunden
+     *
      * @param forecastHours
      * @throws ApiException
      */
@@ -241,7 +275,7 @@ public class Api {
         loadConfig();
         WeatherRequest request = changeConfig();
         request.setForecast(forecastHours);
-        Response reponse = callPostRequest("http://weatherbox:8080/weather", request);
+        Response reponse = callPostRequest("/weather", request);
         try {
             config = (WeatherResponse) reponse.convert();
         } catch (ClassNotFoundException e) {
@@ -251,6 +285,7 @@ public class Api {
 
     /**
      * gibt den ApiKey fuer OpenWeatherMap zurueck
+     *
      * @return
      * @throws ApiException
      */
@@ -261,6 +296,7 @@ public class Api {
 
     /**
      * setzt den ApiKey fuer OpenWeatherMap
+     *
      * @param key
      * @throws ApiException
      */
@@ -268,7 +304,7 @@ public class Api {
         loadConfig();
         WeatherRequest request = changeConfig();
         request.setKey(key);
-        Response reponse = callPostRequest("http://weatherbox:8080/weather", request);
+        Response reponse = callPostRequest("/weather", request);
         try {
             config = (WeatherResponse) reponse.convert();
         } catch (ClassNotFoundException e) {
@@ -278,6 +314,7 @@ public class Api {
 
     /**
      * gibt die Webservice URL fuer OpenWeatherMap zurueck
+     *
      * @return
      * @throws ApiException
      */
@@ -288,6 +325,7 @@ public class Api {
 
     /**
      * setzt die Webservice URL f+r OpenWeatherMap
+     *
      * @param url
      * @throws ApiException
      */
@@ -295,7 +333,7 @@ public class Api {
         loadConfig();
         WeatherRequest request = changeConfig();
         request.setUrl(url);
-        Response reponse = callPostRequest("http://weatherbox:8080/weather", request);
+        Response reponse = callPostRequest("/weather", request);
         try {
             config = (WeatherResponse) reponse.convert();
         } catch (ClassNotFoundException e) {
@@ -306,35 +344,48 @@ public class Api {
 
     /**
      * deaktiviert die automatischen Wetterupdates in der Box
+     *
      * @throws ApiException
      */
     public void disableWeatherUpdate() throws ApiException {
         SysInfoRequest request = new SysInfoRequest();
         request.setMode(false);
-        callPostRequest("http://weatherbox:8080/system", request);
+        callPostRequest("/system", request);
     }
 
     /**
      * aktiviert die automatischen Wetterupdates in der Box
+     *
      * @throws ApiException
      */
     public void enableWeatherUpdate() throws ApiException {
         SysInfoRequest request = new SysInfoRequest();
         request.setMode(true);
-        callPostRequest("http://weatherbox:8080/system", request);
+        callPostRequest("/system", request);
     }
 
     /**
      * gibt die SystemInfos zurueck
+     *
      * @return
      * @throws ApiException
      */
     public SysInfoResponse getSystemInfo() throws ApiException {
-        Response response = callGetRequest("http://weatherbox:8080/system");
+        Response response = callGetRequest("/system");
         try {
             return (SysInfoResponse) response.convert();
         } catch (ClassNotFoundException e) {
             throw new ApiException(500, e.getMessage());
         }
+    }
+
+    public boolean isAvailable() {
+        try {
+            InetAddress.getByName("weatherbox");
+            return true;
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 }

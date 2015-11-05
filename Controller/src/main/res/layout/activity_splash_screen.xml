@@ -19,6 +19,11 @@
               android:text="@string/app_name" android:visibility="visible"
               android:drawableTop="@mipmap/logo" android:layout_gravity="center"
               android:singleLine="false" android:phoneNumber="false"/>
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
+            android:id="@+id/status" android:layout_gravity="bottom|center" android:singleLine="false"/>
 
     <!-- This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows. -->
