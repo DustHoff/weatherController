@@ -165,8 +165,8 @@ public class Api {
      */
     public void setCloudIntensitiy(CloudType value) throws ApiException {
         AmbientRequest request = new AmbientRequest();
-        request.setComponent("Cloud");
-        request.setComponent(value.name());
+        request.setComponent("Clouds");
+        request.setValue(value.name());
         Response response = callPostRequest("/ambient", request);
         try {
             boolean success = (Boolean) response.convert();
