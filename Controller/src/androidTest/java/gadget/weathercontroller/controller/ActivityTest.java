@@ -79,8 +79,8 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
                 "}"));
         webServer.enqueue(new MockResponse().setBody("\"" + SkyLightType.DAY.getRed() + "," + SkyLightType.DAY.getGreen() + "," + SkyLightType.DAY.getBlue() + "\""));
         webServer.enqueue(new MockResponse().setBody("100"));
-//        Espresso.onView(ViewMatchers.withId(R.id.info)).check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
-        //      Espresso.onView(ViewMatchers.withId(R.id.ambient)).check(ViewAssertions.matches(ViewMatchers.withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
+        Espresso.onView(ViewMatchers.withId(R.id.info)).check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
+        Espresso.onView(ViewMatchers.withId(R.id.ambient)).check(ViewAssertions.matches(ViewMatchers.withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
 
         Espresso.onView(ViewMatchers.withId(R.id.modeSwitch)).perform(ViewActions.click());
 
