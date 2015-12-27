@@ -9,18 +9,11 @@ import android.support.test.espresso.matcher.ViewMatchers;
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.View;
 import android.widget.SeekBar;
-import gadget.component.api.data.SysInfoResponse;
-import gadget.component.hardware.data.CloudType;
+import com.squareup.okhttp.mockwebserver.MockResponse;
+import com.squareup.okhttp.mockwebserver.MockWebServer;
 import gadget.component.hardware.data.SkyLightType;
-import gadget.weathercontroller.controller.comm.Api;
-import gadget.weathercontroller.controller.comm.ApiException;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
-import org.mockito.Mockito;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
-
-import java.lang.reflect.Field;
 
 /**
  * Created by Dustin on 12.10.2015.
@@ -28,6 +21,7 @@ import java.lang.reflect.Field;
 public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherController> {
 
     private WeatherController weatherController;
+    private MockWebServer webServer;
 
     public ActivityTest() {
         super(WeatherController.class);
@@ -38,36 +32,53 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
         injectInstrumentation(InstrumentationRegistry.getInstrumentation());
         setActivityInitialTouchMode(true);
         System.setProperty("dexmaker.dexcache", getInstrumentation().getTargetContext().getCacheDir().getPath());
-        Api api = Mockito.mock(Api.class, new Answer() {
-            @Override
-            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
-                throw new ApiException(500, "not Mocked");
-            }
-        });
-        Mockito.doNothing().when(api).enableWeatherUpdate();
-        Mockito.doNothing().when(api).disableWeatherUpdate();
-        Mockito.doReturn(SkyLightType.DAY).when(api).getSkylightRGB();
-        Mockito.doReturn(100).when(api).getRainIntensity();
-
-        SysInfoResponse response = new SysInfoResponse();
-        response.setUptime(1000);
-        response.setMode(false);
-        response.setClouds(CloudType.CLOUDY.name());
-        response.setTemperature("10");
-        response.setPrecipitation("10%");
-        Mockito.doReturn(response).when(api).getSystemInfo();
-        Field field = Api.class.getDeclaredField("instance");
-        field.setAccessible(true);
-        field.set(api, api);
+        webServer = new MockWebServer();
+        webServer.start();
         weatherController = getActivity();
+        weatherController.changeURL("http://" + webServer.getHostName() + ":" + webServer.getPort());
     }
 
     public void testCheckWeatherText() throws Throwable {
-        Espresso.onView(ViewMatchers.withId(R.id.temperature)).check(ViewAssertions.matches(ViewMatchers.withText("10")));
-        Espresso.onView(ViewMatchers.withId(R.id.clouds)).check(ViewAssertions.matches(ViewMatchers.withText(CloudType.CLOUDY.name())));
+        webServer.enqueue(new MockResponse().setBody("{\n" +
+                "  \"temperature\": \"10.73 - 12.29 celsius\",\n" +
+                "  \"clouds\": \"few clouds %\",\n" +
+                "  \"precipitation\": \"null null\",\n" +
+                "  \"humidity\": \"81.0 %\"\n" +
+                "}"));
+        weatherController.updateWeather();
+        Espresso.onView(ViewMatchers.withId(R.id.temperature)).check(ViewAssertions.matches(ViewMatchers.withText("10.73 - 12.29 celsius")));
+        Espresso.onView(ViewMatchers.withId(R.id.clouds)).check(ViewAssertions.matches(ViewMatchers.withText("few clouds %")));
     }
 
     public void testChangeModeAmbient() throws Throwable {
+        webServer.enqueue(new MockResponse().setBody("{\n" +
+                "  \"city\": \"Osnabruck\",\n" +
+                "  \"url\": \"http://api.openweathermap.org/data/2.5/forecast?mode\\u003dxml\\u0026APPID\\u003d$KEY\\u0026id\\u003d$CITY\",\n" +
+                "  \"key\": \"828ce75931f9fef098daf3930139f6cd\",\n" +
+                "  \"dlcity\": \"http://bulk.openweathermap.org/sample/city.list.json.gz\",\n" +
+                "  \"forecast\": 0,\n" +
+                "  \"skyled\": 40,\n" +
+                "  \"useSky\": true,\n" +
+                "  \"useClouds\": true,\n" +
+                "  \"useRain\": true,\n" +
+                "  \"delay\": 180,\n" +
+                "  \"autoupdate\": true\n" +
+                "}"));
+        webServer.enqueue(new MockResponse().setBody("{\n" +
+                "  \"city\": \"Osnabruck\",\n" +
+                "  \"url\": \"http://api.openweathermap.org/data/2.5/forecast?mode\\u003dxml\\u0026APPID\\u003d$KEY\\u0026id\\u003d$CITY\",\n" +
+                "  \"key\": \"828ce75931f9fef098daf3930139f6cd\",\n" +
+                "  \"dlcity\": \"http://bulk.openweathermap.org/sample/city.list.json.gz\",\n" +
+                "  \"forecast\": 0,\n" +
+                "  \"skyled\": 40,\n" +
+                "  \"useSky\": true,\n" +
+                "  \"useClouds\": true,\n" +
+                "  \"useRain\": true,\n" +
+                "  \"delay\": 180,\n" +
+                "  \"autoupdate\": false\n" +
+                "}"));
+        webServer.enqueue(new MockResponse().setBody("\"" + SkyLightType.DAY.getRed() + "," + SkyLightType.DAY.getGreen() + "," + SkyLightType.DAY.getBlue() + "\""));
+        webServer.enqueue(new MockResponse().setBody("100"));
 //        Espresso.onView(ViewMatchers.withId(R.id.info)).check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
         //      Espresso.onView(ViewMatchers.withId(R.id.ambient)).check(ViewAssertions.matches(ViewMatchers.withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
 
