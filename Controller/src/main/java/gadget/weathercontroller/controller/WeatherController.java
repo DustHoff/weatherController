@@ -1,20 +1,22 @@
 package gadget.weathercontroller.controller;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.KeyEvent;
+import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewPropertyAnimator;
 import android.widget.*;
-import gadget.component.api.data.SysInfoResponse;
+import gadget.component.api.data.Config;
+import gadget.component.api.data.Weather;
 import gadget.component.hardware.data.CloudType;
 import gadget.component.hardware.data.SkyLightType;
-import gadget.weathercontroller.controller.comm.Api;
-import gadget.weathercontroller.controller.comm.ApiException;
+import gadget.weatherbox.Client;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -22,6 +24,7 @@ import java.util.TimerTask;
 
 public class WeatherController extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, SeekBar.OnSeekBarChangeListener, AdapterView.OnItemSelectedListener {
 
+    private Client client = new Client("http://weatherbox:8080");
     private LinearLayout weatherInfo;
     private LinearLayout ambient;
     private int red;
@@ -71,26 +74,21 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-        updateWeather();
+        //updateWeather();
     }
 
-    private void updateWeather() {
-        try {
-            final SysInfoResponse weather = Api.call().getSystemInfo();
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    ((TextView) findViewById(R.id.temperature)).setText(weather.getTemperature());
-                    ((TextView) findViewById(R.id.precipitation)).setText(weather.getPrecipitation());
-                    ((TextView) findViewById(R.id.humidity)).setText(weather.getHumidity());
-                    ((TextView) findViewById(R.id.clouds)).setText(weather.getClouds());
-                }
-            });
-
-        } catch (ApiException e) {
-            Log.e(getClass().getPackage().getName(), "Problem while updating Weather: " + e.getMessage(), e);
-        }
-
+    public void updateWeather() {
+        final Weather weather = client.getWeather();
+        if (weather == null) return;
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                ((TextView) findViewById(R.id.temperature)).setText(weather.getTemperature());
+                ((TextView) findViewById(R.id.precipitation)).setText(weather.getPrecipitation());
+                ((TextView) findViewById(R.id.humidity)).setText(weather.getHumidity());
+                ((TextView) findViewById(R.id.clouds)).setText(weather.getClouds());
+            }
+        });
     }
 
     /**
@@ -102,60 +100,39 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         if (isChecked) {
-            try {
-                Log.i(getClass().getPackage().getName(), "disable Weather update");
-                Api.call().disableWeatherUpdate();
-                Log.i(getClass().getPackage().getName(), "update color seekbar position");
-                SkyLightType color = Api.call().getSkylightRGB();
-                ((SeekBar) findViewById(R.id.blue)).setProgress(color.getBlue());
-                ((SeekBar) findViewById(R.id.green)).setProgress(color.getGreen());
-                ((SeekBar) findViewById(R.id.red)).setProgress(color.getRed());
-                Log.i(getClass().getPackage().getName(), "update rain seekbar position");
-                ((SeekBar) findViewById(R.id.rain)).setProgress(Api.call().getRainIntensity());
-            } catch (ApiException e) {
-                Log.e(getClass().getPackage().getName(), "Problem while changing mode", e);
-                ((Switch) findViewById(R.id.modeSwitch)).setChecked(false);
-                return;
-            }
+            Log.i(getClass().getPackage().getName(), "disable Weather update");
+            client.disableAutoUpdate();
+            Log.i(getClass().getPackage().getName(), "update color seekbar position");
+            final SkyLightType color = client.getSkyLight();
+            ((SeekBar) findViewById(R.id.blue)).setProgress(color.getBlue());
+            ((SeekBar) findViewById(R.id.green)).setProgress(color.getGreen());
+            ((SeekBar) findViewById(R.id.red)).setProgress(color.getRed());
+
+            Log.i(getClass().getPackage().getName(), "update rain seekbar position");
+            ((SeekBar) findViewById(R.id.rain)).setProgress(client.getRain());
+
+            final ImageView colorView = (ImageView) findViewById(R.id.SkyColor);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    colorView.setBackgroundColor(Color.rgb(color.getRed(), color.getGreen(), color.getBlue()));
+                }
+            });
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     ambient.setVisibility(View.VISIBLE);
-                    ambient.setAlpha(0f);
-                    ambient.animate().alpha(1f).setDuration(1000).start();
-
-                    ViewPropertyAnimator ani = weatherInfo.animate().alpha(0f).setDuration(1000);
-                    ani.setListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            weatherInfo.setVisibility(View.GONE);
-                        }
-                    });
-                    ani.start();
+                    weatherInfo.setVisibility(View.GONE);
                 }
             });
         } else {
-            try {
-                Api.call().enableWeatherUpdate();
-            } catch (ApiException e) {
-                //nothing to do
-            }
+            client.enableAutoUpdate();
 
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     weatherInfo.setVisibility(View.VISIBLE);
-                    weatherInfo.setAlpha(0f);
-                    weatherInfo.animate().alpha(1f).setDuration(1000).start();
-
-                    ViewPropertyAnimator ani = ambient.animate().alpha(0f).setDuration(1000);
-                    ani.setListener(new AnimatorListenerAdapter() {
-                        @Override
-                        public void onAnimationEnd(Animator animation) {
-                            ambient.setVisibility(View.GONE);
-                        }
-                    });
-                    ani.start();
+                    ambient.setVisibility(View.GONE);
                 }
             });
         }
@@ -168,7 +145,7 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
         if (seekBar.getId() == R.id.green) green = progress;
         if (seekBar.getId() == R.id.blue) blue = progress;
         if (seekBar.getId() == R.id.rain) rain = progress;
-        final ImageView color = (ImageView) findViewById(R.id.weather);
+        final ImageView color = (ImageView) findViewById(R.id.SkyColor);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -183,29 +160,69 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
 
     @Override
     public void onStopTrackingTouch(SeekBar seekBar) {
-        try {
-            Api.call().setSkylightRGB((short) red, (short) green, (short) blue);
-            Api.call().setRainIntensity(rain);
-        } catch (ApiException e) {
-            Log.e(getClass().getPackage().getName(), "Problem while stop touch tracking", e);
-        }
+        SkyLightType type = SkyLightType.FADED;
+        type.modify((short) red, (short) green, (short) blue);
+        client.setSkyLight(type);
+        client.setRain(rain);
     }
 
     @Override
     public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-
         CloudType type = (CloudType) parent.getItemAtPosition(position);
-
-        try {
-            Api.call().setCloudIntensitiy(type);
-        } catch (ApiException e) {
-            Log.e(getClass().getPackage().getName(), "Problem while selecting item", e);
-        }
-
+        client.setClouds(type);
     }
 
     @Override
     public void onNothingSelected(AdapterView<?> parent) {
 
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        switch (keyCode) {
+            case KeyEvent.KEYCODE_MENU:
+                try {
+                    final Config config = client.getConfig();
+                    final EditText owmUrl = (EditText) findViewById(R.id.owmUrl);
+                    owmUrl.setText(config.getUrl());
+                    EditText owmCityDL = (EditText) findViewById(R.id.owmCityDL);
+                    owmCityDL.setText(config.getDlcity());
+                    final EditText owmKey = (EditText) findViewById(R.id.owmKey);
+                    owmKey.setText(config.getKey());
+                    final EditText forecast = (EditText) findViewById(R.id.forecast);
+                    forecast.setText(config.getForecast() + "");
+                    CheckBox useClouds = (CheckBox) findViewById(R.id.useClouds);
+                    useClouds.setChecked(config.isUseClouds());
+                    CheckBox useSky = (CheckBox) findViewById(R.id.useSkylight);
+                    useSky.setChecked(config.isUseSky());
+                    CheckBox useRain = (CheckBox) findViewById(R.id.useRain);
+                    useRain.setChecked(config.isUseRain());
+
+                    //ArrayAdapter<City> adapter = new ArrayAdapter<City>(this, android.R.layout.simple_spinner_item, config.getCities());
+                    //((Spinner) findViewById(R.id.selectedCity)).setAdapter(adapter);
+
+                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                    builder.setTitle("Configuration");
+                    builder.setPositiveButton("save", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            config.setKey(owmKey.getText().toString());
+                            config.setUrl(owmUrl.getText().toString());
+                            config.setForecast(Integer.parseInt(forecast.getText().toString()));
+                        }
+                    });
+                    LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                    builder.setView(inflater.inflate(R.layout.dialog_configuration_dialog, null));
+                    builder.create().show();
+                } catch (Throwable e) {
+                }
+                return true;
+        }
+
+        return super.onKeyDown(keyCode, event);
+    }
+
+    public void changeURL(String url) {
+        client = new Client(url);
     }
 }

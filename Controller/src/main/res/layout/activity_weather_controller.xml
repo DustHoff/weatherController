@@ -32,33 +32,33 @@
         <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/imageView" android:layout_gravity="center_horizontal" android:maxHeight="100dp"
-                android:minHeight="100dp" android:contentDescription="Choosen Color"/>
+                android:id="@+id/SkyColor" android:layout_gravity="center_horizontal" android:maxHeight="50dp"
+                android:contentDescription="Choosen Color" android:minHeight="20dp"/>
         <SeekBar
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/red" android:layout_gravity="center_horizontal" android:paddingTop="15dp"
-                android:paddingBottom="15dp" android:max="255"/>
+                android:id="@+id/red" android:layout_gravity="center_horizontal"
+                android:max="255"/>
         <SeekBar
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/green" android:layout_gravity="center_horizontal" android:paddingBottom="15dp"
-                android:paddingTop="15dp" android:max="255"/>
+                android:id="@+id/green" android:layout_gravity="center_horizontal"
+                android:max="255"/>
         <SeekBar
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/blue" android:layout_gravity="center_horizontal" android:paddingTop="15dp"
-                android:paddingBottom="15dp" android:max="255"/>
+                android:id="@+id/blue" android:layout_gravity="center_horizontal"
+                android:max="255"/>
         <Spinner
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/mist" android:layout_gravity="center_horizontal" android:spinnerMode="dropdown"
+                android:id="@+id/mist" android:layout_gravity="center_horizontal" android:spinnerMode="dialog"
                 android:focusable="true"/>
         <SeekBar
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:id="@+id/rain" android:layout_gravity="center_horizontal" android:paddingTop="20dp"
-                android:paddingBottom="20dp" android:max="3000"/>
+                android:id="@+id/rain" android:layout_gravity="center_horizontal"
+                android:max="3000"/>
     </LinearLayout>
     <LinearLayout
             android:orientation="vertical"
@@ -68,21 +68,22 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:id="@+id/temperature" android:layout_gravity="right"/>
+                android:id="@+id/temperature" android:layout_gravity="right" android:visibility="visible"
+                android:text="loading"/>
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:id="@+id/humidity" android:layout_gravity="right"/>
+                android:id="@+id/humidity" android:layout_gravity="right" android:text="loading"/>
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:id="@+id/precipitation" android:layout_gravity="right"/>
+                android:id="@+id/precipitation" android:layout_gravity="right" android:text="loading"/>
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textAppearance="?android:attr/textAppearanceLarge"
-                android:id="@+id/clouds" android:layout_gravity="right"/>
+                android:id="@+id/clouds" android:layout_gravity="right" android:text="loading"/>
     </LinearLayout>
 </LinearLayout>
