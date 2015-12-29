@@ -1,5 +1,12 @@
 language: android
 sudo: required
+deploy:
+  provider: releases
+  api_key:
+    secure: wkKiClObsuZhUZY2IsDDXpR38NQPHxvS84zZ0QKhyBps7h5FcBKxDG48Hr5q+cvPInb56/zjtD/RjRTLupj3Nw/7o6CuT4A67Ir6mVyP/oqgTk6LcDtkmR9RtoEqLuPYZwIROX5HiobU40cFjKavM/pwg+dPInY/X3s1HToo3adHgDVO3ybjiZR2N3Yg5to1MTC8fkGm1Uu5hQeQeBYwGKhtsypSb5Cv33jlLKaUO7kZlA6qKomyoCD5jbBg+aMvmn1Avleu/GBvSMU96IFyn9tMtO5ek1NqXBZNSdzJ5XoClzaKT97rJfCwmaOYXffGM1pzba2eDDJ+VXLxszMUIFFVvPxIE6W64OBvwd+AqKzWkL/StixwDQahvhzHNHHOIgNs30SgBjnpFjy3HIeRT5co/GunxPHhszp5oL8mGfYiLIn8VDBHDa8wrnT5buaAys/vHodvdj2dtN0O2x44tqBHCsf5wZmxxP2jsPIM8k/iHRcXvIJ8uQm5EtHy50Z/D+r2br0V774mVyosPEcpsky49hAc/S6HRsq87PQf2dGNAEHNPTLNMPQ4ztxoko4wJPDb25m0RzAmwokuizWguo1gM7QxspRsaHl42OXdqaCzddASFKDP3Up/HWNwZb/X2giLBWW3JeeBaEIiFfU6DAr+QdlQ+n3NHfiYKVYclFw=
+  file: Controller/build/outputs/Controller-release-usigned.apk
+  on:
+    tags: true
 notifications:
   email: false
 env:
