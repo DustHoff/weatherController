@@ -52,7 +52,14 @@ android {
 
     }
 }
-
+task grantAnimationPermission(type: Exec, dependsOn: 'installDebug') {
+    commandLine "adb shell pm grant $android.defaultConfig.applicationId android.permission.SET_ANIMATION_SCALE".split(' ')
+}
+tasks.whenTaskAdded { task ->
+    if (task.name.startsWith('connectedAndroidTest')) {
+        task.dependsOn grantAnimationPermission
+    }
+}
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     androidTestCompile "org.mockito:mockito-core:1.+"

@@ -1,5 +1,8 @@
 package gadget.weathercontroller.controller;
 
+import android.app.KeyguardManager;
+import android.content.Context;
+import android.os.IBinder;
 import android.support.test.InstrumentationRegistry;
 import android.support.test.espresso.Espresso;
 import android.support.test.espresso.action.ViewActions;
@@ -15,6 +18,10 @@ import gadget.component.hardware.data.SkyLightType;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+
 /**
  * Created by Dustin on 12.10.2015.
  */
@@ -23,19 +30,50 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
     private WeatherController weatherController;
     private MockWebServer webServer;
 
-    public ActivityTest() {
+    public ActivityTest() throws IOException {
         super(WeatherController.class);
     }
 
     protected void setUp() throws Exception {
         super.setUp();
+
+        System.setProperty("dexmaker.dexcache", getInstrumentation().getTargetContext().getCacheDir().getPath());
         injectInstrumentation(InstrumentationRegistry.getInstrumentation());
         setActivityInitialTouchMode(true);
-        System.setProperty("dexmaker.dexcache", getInstrumentation().getTargetContext().getCacheDir().getPath());
+
         webServer = new MockWebServer();
         webServer.start();
+        WeatherController.URL = "http://" + webServer.getHostName() + ":" + webServer.getPort();
+
         weatherController = getActivity();
-        weatherController.changeURL("http://" + webServer.getHostName() + ":" + webServer.getPort());
+
+        // disable Lockscreen
+        KeyguardManager mKeyGuardManager = (KeyguardManager) weatherController.getSystemService(Context.KEYGUARD_SERVICE);
+        KeyguardManager.KeyguardLock mLock = mKeyGuardManager.newKeyguardLock(weatherController.getClass().getName());
+        mLock.disableKeyguard();
+        //disable animations
+        try {
+            Class<?> windowManagerStubClazz = Class.forName("android.view.IWindowManager$Stub");
+            Method asInterface = windowManagerStubClazz.getDeclaredMethod("asInterface", IBinder.class);
+
+            Class<?> serviceManagerClazz = Class.forName("android.os.ServiceManager");
+            Method getService = serviceManagerClazz.getDeclaredMethod("getService", String.class);
+
+            Class<?> windowManagerClazz = Class.forName("android.view.IWindowManager");
+
+            Method mSetAnimationScalesMethod = windowManagerClazz.getDeclaredMethod("setAnimationScales", float[].class);
+            Method mGetAnimationScalesMethod = windowManagerClazz.getDeclaredMethod("getAnimationScales");
+
+            IBinder windowManagerBinder = (IBinder) getService.invoke(null, "window");
+            Object mWindowManagerObject = asInterface.invoke(null, windowManagerBinder);
+
+            float[] scaleFactors = (float[]) mGetAnimationScalesMethod.invoke(mWindowManagerObject);
+            Arrays.fill(scaleFactors, 0f);
+            mSetAnimationScalesMethod.invoke(mWindowManagerObject, scaleFactors);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to access animation methods", e);
+        }
     }
 
     public void testCheckWeatherText() throws Throwable {
@@ -79,6 +117,7 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
                 "}"));
         webServer.enqueue(new MockResponse().setBody("\"" + SkyLightType.DAY.getRed() + "," + SkyLightType.DAY.getGreen() + "," + SkyLightType.DAY.getBlue() + "\""));
         webServer.enqueue(new MockResponse().setBody("100"));
+
         Espresso.onView(ViewMatchers.withId(R.id.info)).check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
         Espresso.onView(ViewMatchers.withId(R.id.ambient)).check(ViewAssertions.matches(ViewMatchers.withEffectiveVisibility(ViewMatchers.Visibility.GONE)));
 
