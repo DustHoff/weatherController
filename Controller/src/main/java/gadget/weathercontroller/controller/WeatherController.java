@@ -1,18 +1,13 @@
 package gadget.weathercontroller.controller;
 
-import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.*;
-import gadget.component.api.data.Config;
 import gadget.component.api.data.Weather;
 import gadget.component.hardware.data.CloudType;
 import gadget.component.hardware.data.SkyLightType;
@@ -24,7 +19,8 @@ import java.util.TimerTask;
 
 public class WeatherController extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, SeekBar.OnSeekBarChangeListener, AdapterView.OnItemSelectedListener {
 
-    private Client client = new Client("http://weatherbox:8080");
+    public static String URL = "http://weatherbox:8080";
+    private Client client = new Client(URL);
     private LinearLayout weatherInfo;
     private LinearLayout ambient;
     private int red;
@@ -53,6 +49,7 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
         SeekBar rain = (SeekBar) findViewById(R.id.rain);
         rain.setOnSeekBarChangeListener(this);
         Spinner mist = (Spinner) findViewById(R.id.mist);
+
         mist.setAdapter(new ArrayAdapter<CloudType>(this, android.R.layout.simple_spinner_item, CloudType.values()));
         mist.setOnItemSelectedListener(this);
 
@@ -63,18 +60,6 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
                 updateWeather();
             }
         }, 5000, 60000);
-    }
-
-/*    @Override
-    protected void onPostResume() {
-        super.onPostResume();
-        updateWeather();
-    }*/
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        //updateWeather();
     }
 
     public void updateWeather() {
@@ -178,51 +163,11 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
     }
 
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_MENU:
-                try {
-                    final Config config = client.getConfig();
-                    final EditText owmUrl = (EditText) findViewById(R.id.owmUrl);
-                    owmUrl.setText(config.getUrl());
-                    EditText owmCityDL = (EditText) findViewById(R.id.owmCityDL);
-                    owmCityDL.setText(config.getDlcity());
-                    final EditText owmKey = (EditText) findViewById(R.id.owmKey);
-                    owmKey.setText(config.getKey());
-                    final EditText forecast = (EditText) findViewById(R.id.forecast);
-                    forecast.setText(config.getForecast() + "");
-                    CheckBox useClouds = (CheckBox) findViewById(R.id.useClouds);
-                    useClouds.setChecked(config.isUseClouds());
-                    CheckBox useSky = (CheckBox) findViewById(R.id.useSkylight);
-                    useSky.setChecked(config.isUseSky());
-                    CheckBox useRain = (CheckBox) findViewById(R.id.useRain);
-                    useRain.setChecked(config.isUseRain());
-
-                    //ArrayAdapter<City> adapter = new ArrayAdapter<City>(this, android.R.layout.simple_spinner_item, config.getCities());
-                    //((Spinner) findViewById(R.id.selectedCity)).setAdapter(adapter);
-
-                    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-                    builder.setTitle("Configuration");
-                    builder.setPositiveButton("save", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            config.setKey(owmKey.getText().toString());
-                            config.setUrl(owmUrl.getText().toString());
-                            config.setForecast(Integer.parseInt(forecast.getText().toString()));
-                        }
-                    });
-                    LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-                    builder.setView(inflater.inflate(R.layout.dialog_configuration_dialog, null));
-                    builder.create().show();
-                } catch (Throwable e) {
-                }
-                return true;
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == R.id.action_settings) {
+            ConfigDialog.newInstance().show(getSupportFragmentManager(), "Config");
+            return true;
         }
-
-        return super.onKeyDown(keyCode, event);
-    }
-
-    public void changeURL(String url) {
-        client = new Client(url);
+        return super.onOptionsItemSelected(item);
     }
 }

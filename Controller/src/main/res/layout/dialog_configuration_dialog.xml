@@ -53,10 +53,10 @@
                 android:textAppearance="?android:attr/textAppearanceMedium"
                 android:text="Selected City"
                 android:id="@+id/owmCitySelectDescription"/>
-        <Spinner
+        <AutoCompleteTextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:id="@+id/selectedCity" android:spinnerMode="dropdown"/>
+                android:id="@+id/selectedCity" android:spinnerMode="dropdown" android:singleLine="true"/>
     </TableRow>
     <TableRow
             android:layout_width="match_parent"
