@@ -54,10 +54,15 @@ android {
 }
 task grantAnimationPermission(type: Exec, dependsOn: 'installDebug') {
     commandLine "adb shell pm grant $android.defaultConfig.applicationId android.permission.SET_ANIMATION_SCALE".split(' ')
+    commandLine "adb logcat -c".split(" ")
+}
+task pullLogCat(type: Exec) {
+    commandLine "adb logcat -d -v time".split(" ")
 }
 tasks.whenTaskAdded { task ->
     if (task.name.startsWith('connectedAndroidTest')) {
         task.dependsOn grantAnimationPermission
+        task.finalizedBy pullLogCat
     }
 }
 dependencies {
