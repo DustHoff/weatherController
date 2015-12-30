@@ -53,8 +53,8 @@ android {
     }
 }
 task grantAnimationPermission(type: Exec, dependsOn: 'installDebug') {
-    commandLine "adb shell pm grant $android.defaultConfig.applicationId android.permission.SET_ANIMATION_SCALE".split(' ')
     commandLine "adb logcat -c".split(" ")
+    commandLine "adb shell pm grant $android.defaultConfig.applicationId android.permission.SET_ANIMATION_SCALE".split(' ')
 }
 task pullLogCat(type: Exec) {
     commandLine "adb logcat -d -v time".split(" ")
