@@ -31,6 +31,7 @@ public class CitySelectionListener implements TextWatcher {
 
     @Override
     public void afterTextChanged(Editable s) {
+        if (!(s instanceof AutoCompleteTextView)) return;
         List<City> cityList = client.searchCity(s.toString());
         AutoCompleteTextView textView = (AutoCompleteTextView) s;
         textView.setAdapter(new ArrayAdapter<City>(textView.getContext(), android.R.layout.simple_dropdown_item_1line, cityList));

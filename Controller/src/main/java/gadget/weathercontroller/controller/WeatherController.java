@@ -3,8 +3,10 @@ package gadget.weathercontroller.controller;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.StrictMode;
+import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.*;
@@ -59,7 +61,7 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
             public void run() {
                 updateWeather();
             }
-        }, 5000, 60000);
+        }, 300000, 300000);
     }
 
     public void updateWeather() {
@@ -164,10 +166,19 @@ public class WeatherController extends AppCompatActivity implements CompoundButt
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == R.id.action_settings) {
-            ConfigDialog.newInstance().show(getSupportFragmentManager(), "Config");
+        if (item.getItemId() == R.id.settings) {
+            FragmentManager manager = getSupportFragmentManager();
+            ConfigDialog config = (ConfigDialog) manager.findFragmentByTag("Config");
+            if (config == null) config = ConfigDialog.newInstance();
+            config.show(manager, "Config");
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_weather_controller, menu);
+        return true;
     }
 }

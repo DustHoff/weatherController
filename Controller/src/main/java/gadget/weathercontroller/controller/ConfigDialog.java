@@ -70,6 +70,7 @@ public class ConfigDialog extends AppCompatDialogFragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         Config config = client.getConfig();
+        if (config == null) return;
         EditText owmUrl = (EditText) view.findViewById(R.id.owmUrl);
         owmUrl.setText(config.getUrl());
         EditText owmCityDL = (EditText) view.findViewById(R.id.owmCityDL);
@@ -86,6 +87,7 @@ public class ConfigDialog extends AppCompatDialogFragment {
         useRain.setChecked(config.isUseRain());
         AutoCompleteTextView citySelect = (AutoCompleteTextView) view.findViewById(R.id.selectedCity);
         citySelect.addTextChangedListener(new CitySelectionListener(client));
+        citySelect.setText(config.getCity());
     }
 
     /**

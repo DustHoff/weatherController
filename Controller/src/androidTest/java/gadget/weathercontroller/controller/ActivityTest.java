@@ -128,6 +128,30 @@ public class ActivityTest extends ActivityInstrumentationTestCase2<WeatherContro
         Espresso.onView(ViewMatchers.withId(R.id.rain)).check(ViewAssertions.matches(SeekbarPosition(100)));
     }
 
+    public void testOpenOptions() throws Throwable {
+        webServer.enqueue(new MockResponse().setBody("{\n" +
+                "  \"city\": \"Osnabruck\",\n" +
+                "  \"url\": \"http://api.openweathermap.org/data/2.5/forecast?mode\\u003dxml\\u0026APPID\\u003d$KEY\\u0026id\\u003d$CITY\",\n" +
+                "  \"key\": \"828ce75931f9fef098daf3930139f6cd\",\n" +
+                "  \"dlcity\": \"http://bulk.openweathermap.org/sample/city.list.json.gz\",\n" +
+                "  \"forecast\": 0,\n" +
+                "  \"skyled\": 40,\n" +
+                "  \"useSky\": true,\n" +
+                "  \"useClouds\": true,\n" +
+                "  \"useRain\": true,\n" +
+                "  \"delay\": 180,\n" +
+                "  \"autoupdate\": false\n" +
+                "}"));
+        webServer.enqueue(new MockResponse().setBody("[]"));
+        Espresso.onView(ViewMatchers.withId(R.id.settings)).perform(ViewActions.click());
+        Espresso.closeSoftKeyboard();
+        Espresso.onView(ViewMatchers.withId(R.id.selectedCity)).check(ViewAssertions.matches(ViewMatchers.isDisplayed()));
+        Espresso.onView(ViewMatchers.withId(R.id.selectedCity)).check(ViewAssertions.matches(ViewMatchers.withText("Osnabruck")));
+        Espresso.onView(ViewMatchers.withId(R.id.useRain)).check(ViewAssertions.matches(ViewMatchers.isChecked()));
+        Espresso.onView(ViewMatchers.withId(R.id.useClouds)).check(ViewAssertions.matches(ViewMatchers.isChecked()));
+        Espresso.onView(ViewMatchers.withId(R.id.useSkylight)).check(ViewAssertions.matches(ViewMatchers.isChecked()));
+    }
+
     private Matcher<View> SeekbarPosition(final int value) {
         return new BoundedMatcher<View, SeekBar>(SeekBar.class) {
             @Override
