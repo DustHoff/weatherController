@@ -19,7 +19,7 @@ before_script:
   - mkdir Controller/libs
   - wget $(curl -Ls -o /dev/null -w %{url_effective} https://github.com/DustHoff/weatherbox/releases/latest | sed 's/tag/download/g')/Weatherbox-api.jar -O Controller/libs/weatherbox.jar
   - echo no | android create avd --force -n test -t android-19 --abi armeabi-v7a --skin 768x1280
-  - emulator -avd test -no-skin -no-audio -no-window &
+  - emulator -avd test -no-audio -no-window &
   - android-wait-for-emulator
   - adb shell input swipe 384 896 384 10 && adb shell input tap 700 1100 &
 script: gradle build connectedCheck --stacktrace
