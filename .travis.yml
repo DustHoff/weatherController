@@ -21,8 +21,7 @@ before_script:
   - echo no | android create avd --force -n test -t android-19 --abi armeabi-v7a --skin 768x1280
   - emulator -avd test -no-skin -no-audio -no-window &
   - android-wait-for-emulator
-  - adb shell input swipe 384 896 384 10
-  - adb shell input tap 700 1100
+  - adb shell input swipe 384 896 384 10 && adb shell input tap 700 1100 &
 script: gradle build connectedCheck --stacktrace
 android:
   components:
